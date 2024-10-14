@@ -1,0 +1,80 @@
+stages:
+  - deploy
+
+deploy-ixl-staging:
+  stage: deploy
+  tags:
+    - ixl-staging
+  script:
+    - cd $CI_PROJECT_DIR
+    - export DIR_ROOT="/domains/admin.staging.zero.nl"
+    - |-
+      cat <<EOF > .env.local
+      VITE_VUE_APP_NAME="zero"
+      VITE_VUE_APP_ENV=local
+      VITE_VUE_APP_API_URL=https://api.staging.zero.nl
+      VITE_VUE_APP_API_CLIENT_ID=2
+      VITE_VUE_APP_API_CLIENT_SECRET=ydGpmLExIbph158yXYFpXKE9oJZ2FII2dhu4WtT2
+      VITE_VUE_APP_I18N_LOCALE=en
+      VITE_VUE_APP_I18N_FALLBACK_LOCALE=en
+      EOF
+    - yarn cache clean --mirror
+    - yarn cache clean
+    - yarn install --frozen-lockfile
+    - yarn build
+    - cd dist
+    - export DO_RELEASE=$(mktemp)
+    - export NAMEDIR=$(date +%Y%m%d-%H%M%S)
+    - mkdir -pv ${DIR_ROOT}/releases/$NAMEDIR
+    - cp -ar . ${DIR_ROOT}/releases/$NAMEDIR/
+    - |-
+      cat <<EOF >> "${DO_RELEASE}"
+      #!/usr/bin/env bash
+      cd ${DIR_ROOT}
+      [ -d public_html ] && rm public_html # Stop pipeline if we can not delete the dir.
+      ln -s ${DIR_ROOT}/releases/$NAMEDIR ${DIR_ROOT}/public_html
+      EOF
+    - /bin/bash -xe "${DO_RELEASE}"
+    - rm "${DO_RELEASE}"
+    - find ${DIR_ROOT}/releases/ -maxdepth 1 -mindepth 1 -type d | sort -g | head -n -4 | xargs rm -rf
+  only:
+    - development
+
+deploy-ixl-production:
+  stage: deploy
+  tags:
+    - ixl-production
+  script:
+    - cd $CI_PROJECT_DIR
+    - export DIR_ROOT="/domains/admin.zero.nl"
+    - |-
+      cat <<EOF > .env.local
+      VITE_VUE_APP_NAME="ZERO"
+      VITE_VUE_APP_ENV=local
+      VITE_VUE_APP_API_URL=https://api.zero.nl
+      VITE_VUE_APP_API_CLIENT_ID=2
+      VITE_VUE_APP_API_CLIENT_SECRET=ydGpmLExIbph158yXYFpXKE9oJZ2FII2dhu4WtT2
+      VITE_VUE_APP_I18N_LOCALE=en
+      VITE_VUE_APP_I18N_FALLBACK_LOCALE=en
+      EOF
+    - yarn cache clean --mirror
+    - yarn cache clean
+    - yarn install --frozen-lockfile
+    - yarn build
+    - cd dist
+    - export DO_RELEASE=$(mktemp)
+    - export NAMEDIR=$(date +%Y%m%d-%H%M%S)
+    - mkdir -pv ${DIR_ROOT}/releases/$NAMEDIR
+    - cp -ar . ${DIR_ROOT}/releases/$NAMEDIR/
+    - |-
+      cat <<EOF >> "${DO_RELEASE}"
+      #!/usr/bin/env bash
+      cd ${DIR_ROOT}
+      [ -d public_html ] && rm public_html # Stop pipeline if we can not delete the dir.
+      ln -s ${DIR_ROOT}/releases/$NAMEDIR ${DIR_ROOT}/public_html
+      EOF
+    - /bin/bash -xe "${DO_RELEASE}"
+    - rm "${DO_RELEASE}"
+    - find ${DIR_ROOT}/releases/ -maxdepth 1 -mindepth 1 -type d | sort -g | head -n -4 | xargs rm -rf
+  only:
+    - main

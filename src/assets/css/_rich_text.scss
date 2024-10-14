@@ -1,0 +1,30 @@
+
+.rich_text {
+  h1 {
+    @apply mt-8 mb-1 text-3xl;
+
+  &:first-child {
+    @apply mt-0;
+  }
+  }
+
+  h2 {
+    @apply mt-6 mb-1 text-2xl;
+
+  &:first-child {
+    @apply mt-0;
+  }
+  }
+
+  p {
+    @apply mt-1 mb-4;
+  }
+
+  ol {
+    @apply list-decimal pl-6 my-2;
+  }
+
+  ul {
+    @apply list-disc pl-6 my-2;
+  }
+}
